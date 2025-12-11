@@ -1,0 +1,277 @@
+﻿@using LoyaltyCouponsSystem.BLL.ViewModel.ReceiveFromCustomer
+@model TransactionPaginationViewModel
+
+@{
+    ViewData["Title"] = "All Transactions";
+    Layout = "~/Views/Shared/_LayoutCoupon.cshtml";
+}
+
+<!-- Include Burger Menu for Mobile -->
+@await Html.PartialAsync("_BurgerMenu")
+
+<div class="container mt-5">
+    <h1 class="text-primary text-center mb-4"> @SharedLocalizer["AllTransactionsReciveRecipt"]</h1>
+
+    <!-- Success and Error Messages -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center">@TempData["Error"]</div>
+    }
+
+    <!-- Search Bar -->
+    <div class="mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder=@SharedLocalizer["Search"] onkeyup="searchTransactions()">
+    </div>
+
+    <!-- Transactions Table -->
+    <table class="table table-striped shadow-lg rounded" id="transactionsTable">
+        <thead class="bg-primary text-white">
+            <tr>
+                <th>@SharedLocalizer["CouponReceiptNumber"]</th>
+                <th> @SharedLocalizer["Customer"]</th>
+                <th>@SharedLocalizer["Distributor"]</th>
+                <th>@SharedLocalizer["Technician"]</th>
+                <th>@SharedLocalizer["Governorate"]</th>
+                <th>@SharedLocalizer["Area"]</th>
+                <th>@SharedLocalizer["CreationDateTime"]</th>
+                <th>@SharedLocalizer["ScanQR"]</th>
+                <th>@SharedLocalizer["Details"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var transaction in Model.Transactions)
+            {
+                <tr>
+                    <td>@transaction.CouponReceiptNumber</td>
+                    <td>@transaction.CustomerCodeAndName</td>
+                    <td>@transaction.DistributorCodeAndName</td>
+                    <td>@transaction.TechnicianCodeAndName</td>
+                    <td>@transaction.GovernorateName</td>
+                    <td>@transaction.AreaName</td>
+                    <td>@transaction.TransactionDate.ToString("yyyy-MM-dd HH:mm:ss")</td>                  
+                    <td>
+                            <button type="button" class="btn btn-primary w-100" onclick="redirectToScan('@transaction.CouponReceiptNumber')">Scan</button>
+                    </td>               
+                    <td>
+                        <button type="button" class="btn btn-primary w-100" onclick="redirectToDetails('@transaction.CouponReceiptNumber')">Details</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-container text-center mt-4">
+        @if (Model.CurrentPage > 1)
+        {
+            <a href="@Url.Action("AllTransactions", new { page = Model.CurrentPage - 1, pageSize = Model.PageSize })" class="btn btn-outline-primary me-2">&laquo; Previous</a>
+        }
+
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <a href="@Url.Action("AllTransactions", new { page = i, pageSize = Model.PageSize })" class="btn @(i == Model.CurrentPage ? "btn-primary" : "btn-outline-primary") me-1">@i</a>
+        }
+
+        @if (Model.CurrentPage < Model.TotalPages)
+        {
+            <a href="@Url.Action("AllTransactions", new { page = Model.CurrentPage + 1, pageSize = Model.PageSize })" class="btn btn-outline-primary ms-2">Next &raquo;</a>
+        }
+    </div>
+</div>
+
+
+
+<style>
+    /* Buttons */
+    .btn-primary {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        font-weight: bold;
+        font-size: 14px;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            color: #fff;
+        }
+
+    .btn-outline-primary {
+        border-color: #007bff;
+        color: #007bff;
+        font-weight: bold;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-outline-primary:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+    /* Table */
+    .table {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+        .table th {
+            text-transform: uppercase;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .table td {
+            text-align: center;
+        }
+
+    /* Pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        .pagination-container a {
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-container .btn-primary {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+
+        .pagination-container .btn-outline-primary {
+            background-color: white;
+            border: 1px solid #007bff;
+            color: #007bff;
+        }
+
+    @@media (max-width: 768px) {
+        /* Make the table scrollable on smaller screens */
+        .table-responsive
+
+    {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Adjust search input */
+    #searchInput {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    /* Center-align the heading */
+    h1.text-primary {
+        font-size: 24px;
+        text-align: center;
+    }
+
+    /* Adjust table headers and data */
+    .table th, .table td {
+        font-size: 12px;
+        padding: 5px;
+        white-space: nowrap; /* Prevent text wrapping */
+    }
+
+    /* Reduce button size */
+    .btn {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    /* Stack table columns vertically for extra small screens */
+    @@media (max-width: 480px) {
+        .table thead
+
+    {
+        display: none; /* Hide table header */
+    }
+
+    .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table tr {
+        margin-bottom: 10px;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+    }
+
+        .table td::before {
+            content: attr(data-label);
+            font-weight: bold;
+            text-align: left;
+            position: absolute;
+            left: 10px;
+        }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    }
+    }
+</style>
+
+
+
+<!-- JavaScript for Dynamic Search -->
+<script>
+    function searchTransactions() {
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("searchInput");
+        filter = input.value.toLowerCase();
+        table = document.getElementById("transactionsTable");
+        tr = table.getElementsByTagName("tr");
+
+        for (i = 1; i < tr.length; i++) { // start from 1 to skip header row
+            td = tr[i].getElementsByTagName("td");
+            var match = false;
+            for (var j = 0; j < td.length; j++) {
+                if (td[j]) {
+                    txtValue = td[j].textContent || td[j].innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        match = true;
+                    }
+                }
+            }
+            tr[i].style.display = match ? "" : "none"; // Show/hide row
+        }
+    }
+    
+
+
+    // ----------------------------------------------------------------- //
+
+            function redirectToScan(receiptNumber) {
+        window.location.href = "/QrCode?receiptNumber=" + receiptNumber;
+    }
+
+    function redirectToDetails(receiptNumber) {
+        window.location.href = "/ReceiveFromCustomer/ScannedQrCodes?receiptNumber=" + receiptNumber;
+    }
+
+
+</script>
